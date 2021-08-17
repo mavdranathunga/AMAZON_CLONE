@@ -20,24 +20,26 @@ function Payment() {
     const [succeeded, setSucceeded] = useState(false);
     const [processing, setProcessing] = useState("");
     const [error, setError] = useState(null);
-    const [disabled, setdisabled] = useState(true);
-    const [clientSecret, setClientsecret] = useState(true);
+    const [disabled, setDisabled] = useState(true);
+    const [clientSecret, setClientSecret] = useState(true);
 
     useEffect(() => {
 
-        const getClientsecret = async () => {
+        const getClientSecret = async () => {
             const response = await axios({
                 method: 'post',
                 url: `/payments/create?total=${getBasketTotal(basket) * 100}`
             });
-            setClientsecret(response.data.clientSecret)
+            setClientSecret(response.data.clientSecret)
         }
 
-        getClientsecret();
+        getClientSecret();
     }, [basket])
 
+    console.log('the secret is >>>', clientSecret)
+
     const handleSubmit = async (event) => {
-        event.preventdefault();
+        event.preventDefault();
         setProcessing(true);
 
         const payload =  await stripe.confirmCardPayment(clientSecret, {
@@ -45,16 +47,22 @@ function Payment() {
                 card: elements.getElement(CardElement)
             }
         }).then(({ paymentIntent }) => {
+
             setSucceeded(true);
             setError(null)
             setProcessing(false)
 
-            history.replaceState('./orders')
+            dispatch({
+                type: 'EMPTY_BASKET'
+            })
+
+            history.replace('/orders')
         })
+
     }
 
-    const handlechange = event => {
-        setdisabled(event.empty);
+    const handleChange = event => {
+        setDisabled(event.empty);
         setError(event.error ? event.error.message : "");
     }
 
@@ -103,7 +111,7 @@ function Payment() {
                     </div>
                     <div className='payment_details'>
                         <form onSubmit={handleSubmit}>
-                            <CardElement onChange={handlechange}/>
+                            <CardElement onChange={handleChange}/>
 
                             <div className='payment_priceContainer'>
                             <CurrencyFormat
